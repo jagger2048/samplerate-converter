@@ -93,6 +93,9 @@
     <ClInclude Include="dynamic_bass_boost.h">
       <Filter>signal processing library\EQ</Filter>
     </ClInclude>
+    <ClInclude Include="fir.h">
+      <Filter>signal processing library\filters</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

@@ -166,6 +166,7 @@
     <ClInclude Include="dynamic_bass_boost.h" />
     <ClInclude Include="dynamic_bass_boost2.h" />
     <ClInclude Include="fft_convolver.h" />
+    <ClInclude Include="fir.h" />
     <ClInclude Include="kiss_fft.h" />
     <ClInclude Include="kiss_fftr.h" />
     <ClInclude Include="my_fft.h" />
