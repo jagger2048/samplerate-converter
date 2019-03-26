@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <math.h>
 //	For a fir filter, if the order of fir filter is N, then the length of its
 //	buffer size and coefficents is N+1.
 typedef struct
@@ -114,6 +114,83 @@ void freeFir(FIR* obj) {
 	{
 		free(obj->buffer);
 		free(obj->coeffs);
+		free(obj);
+	}
+}
+
+
+// Polyphase filter
+typedef struct 
+{
+	int bufferLen;
+	int bufferMask;
+	size_t splitBands_;
+	size_t order_;
+
+	int bpos;
+	unsigned int symmetricOrder;		// the number of fir's symmetric coefficient 
+	unsigned int tapNum;
+
+	float **buffer;						// the buffer store fir state
+	float **coeffs;						// half FIR coefficients
+}
+PolyphaseFilter;
+
+PolyphaseFilter* newPolyphaseFilter(size_t order,size_t splitBands,float* coeffs) {
+	// the number of ceofficients is filter order + 1
+	// splitBands:	split the fir filter into |splitBands| bands
+
+	PolyphaseFilter* obj = (PolyphaseFilter*)malloc(sizeof(PolyphaseFilter));
+	obj->splitBands_ = splitBands;
+	obj->order_ = order;
+	obj->bufferLen =ceil((order + 1.0f) / (float)splitBands);
+
+	obj->buffer =(float**)malloc(sizeof(float)*obj->splitBands_);
+	obj->coeffs =(float**)malloc(sizeof(float)*obj->splitBands_);
+	for (size_t n = 0; n < obj->splitBands_; n++)
+	{
+		obj->buffer[n] = (float*)malloc(sizeof(float)*obj->bufferLen);
+		obj->coeffs[n] = (float*)malloc(sizeof(float)*obj->bufferLen);
+		memset(obj->buffer[n], 0, sizeof(float)*obj->bufferLen);
+		memset(obj->coeffs[n], 0, sizeof(float)*obj->bufferLen);
+		for (size_t m = 0; m < obj->bufferLen; m++)
+		{
+			if (n*obj->bufferLen + m > order) 
+			{
+				break;
+			}
+			obj->coeffs[n][m] = coeffs[n*obj->bufferLen + m];
+		}
+	}
+
+	return obj;
+}
+void runPolyphaseDecimation() {
+	// up samplerate
+}
+void runPolyphaseInterpolation(PolyphaseFilter*obj,float in,float* interpOut,int interpNum) {
+	// down samplerate
+
+	for (size_t nBands = 0; nBands < obj->splitBands_; nBands++)
+	{
+		for (size_t n = 0; n < obj->bufferLen; n++)
+		{
+			// run subfir 
+			interpOut[nBands];
+		}
+	}
+
+}
+void freePolyphaseFilter(PolyphaseFilter* obj) {
+	if (obj)
+	{
+		for (size_t n = 0; n < obj->splitBands_; n++)
+		{
+			free(obj->buffer[n]);
+			free(obj->coeffs[n]);
+		}
+		free(obj->coeffs);
+		free(obj->buffer);
 		free(obj);
 	}
 }
