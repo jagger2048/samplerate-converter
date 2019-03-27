@@ -96,6 +96,9 @@
     <ClInclude Include="fir.h">
       <Filter>signal processing library\filters</Filter>
     </ClInclude>
+    <ClInclude Include="unittest.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
