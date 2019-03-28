@@ -191,7 +191,7 @@ void firUnitTest() {
 	//FIR* firEven = createFir(9, b9);
 	float out[48000]{};
 
-	runFir(firEven, x, out, fs, 3);
+	runFir(firEven, x, out, 100, 5);
 
 	//for (size_t n = 0; n < fs/10; n++)
 	//{

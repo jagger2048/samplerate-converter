@@ -89,17 +89,27 @@ FIR* newAsymmetricFir(unsigned int order, float *coeffs) {
 }
 
 
-static inline void stepSymmetricFir(FIR*  obj, float* in,size_t* inOffset,float* out,size_t* outOffset, size_t stepNum) {
-
+static inline void stepSymmetricFir(FIR*  obj, float* in,float* out,size_t stepNum) {
+	size_t pushIndex = 0;
+	size_t popIndex = 0;
 	// push data into the FIFO buffer
 	// NOTE that in some cases,buffer_length is not equal to filter order
 	// buffer_length must be a power of 2 >= filter order in order to use |&| operator.
 	for (size_t stepCounter = 0; stepCounter < stepNum; stepCounter++)
 	{
-		obj->buffer[obj->bpos + stepCounter] = in[(*inOffset)++];
+		if (obj->bpos + stepCounter > obj->bufferMask)
+		{
+			printf("overflow: %d - %d \n", obj->bpos, obj->bufferMask);
+			break;
+		}
+		obj->buffer[obj->bpos + stepCounter] = in[pushIndex++];	// 测试 在 stepNum 不为 2 的倍数时是否会导致溢出
 	}
 
 	obj->bpos = (obj->bpos + stepNum) & (obj->bufferMask);		// update buffer pos
+	//if (obj->bpos == obj->bufferMask)
+	//{
+	//	obj->bpos = 0;
+	//}
 
 	float sample = 0;
 	int rr = obj->bpos;											// right seek index
@@ -120,17 +130,21 @@ static inline void stepSymmetricFir(FIR*  obj, float* in,size_t* inOffset,float*
 		//sample += 0.5f * obj->buffer[mm]; for half band fir filter
 		sample += obj->coeffs[obj->symmetricOrder] * obj->buffer[mm];
 	}
-	out[(*outOffset)++] = sample;
+	out[popIndex++] = sample;
 }
 
-static inline void stepAsymmetricFir(FIR*  obj, float* in, size_t* inOffset, float* out, size_t* outOffset, size_t stepNum) {
+//static inline void stepAsymmetricFir(FIR*  obj, float* in, size_t* inOffset, float* out, size_t* outOffset, size_t stepNum) {
+static inline void stepAsymmetricFir(FIR*  obj, float* in,  float* out, size_t stepNum) {
+
+	size_t pushIndex = 0;
+	size_t popIndex = 0;
 
 	// push data into the FIFO buffer
 	// NOTE that in some cases,buffer_length is not equal to filter order
 	// buffer_length must be a power of 2 >= filter order in order to use |&| operator.
 	for (size_t stepCounter = 0; stepCounter < stepNum; stepCounter++)
 	{
-		obj->buffer[obj->bpos + stepCounter] = in[(*inOffset)++];
+		obj->buffer[obj->bpos + stepCounter] = in[pushIndex++];
 	}
 	obj->bpos = (obj->bpos + stepNum) & (obj->bufferMask);		// update buffer pos
 
@@ -140,7 +154,7 @@ static inline void stepAsymmetricFir(FIR*  obj, float* in, size_t* inOffset, flo
 	{
 		sample += obj->coeffs[kk] * obj->buffer[(obj->bpos + kk)&obj->bufferMask] ;
 	}
-	out[(*outOffset)++] = sample;
+	out[popIndex++] = sample;
 }
 
 FIR* createHalfbandFir(unsigned int order, float *coeffs) {
@@ -183,14 +197,16 @@ FIR* createHalfbandFir(unsigned int order, float *coeffs) {
 	return obj;
 }
 
-static inline void stepHalfbandFir(FIR*  obj, float* in, size_t* inOffset, float* out, size_t* outOffset, size_t stepNum) {
+static inline void stepHalfbandFir(FIR*  obj, float* in, float* out, size_t stepNum) {
+	size_t pushIndex = 0;
+	size_t popIndex = 0;
 
 	// push data into the FIFO buffer
 	// NOTE that in some cases,buffer_length is not equal to filter order
 	// buffer_length must be a power of 2 >= filter order in order to use |&| operator.
 	for (size_t stepCounter = 0; stepCounter < stepNum; stepCounter++)
 	{
-		obj->buffer[obj->bpos + stepCounter] = in[(*inOffset)++];
+		obj->buffer[obj->bpos + stepCounter] = in[pushIndex++];
 	}
 	obj->bpos = (obj->bpos + stepNum) & (obj->bufferMask);		// update buffer pos
 
@@ -212,7 +228,7 @@ static inline void stepHalfbandFir(FIR*  obj, float* in, size_t* inOffset, float
 	//sample += 0.5f * obj->buffer[mm]; for half band fir filter
 	sample += obj->coeffs[obj->symmetricOrder] * obj->buffer[mm];
 
-	out[(*outOffset)++] = sample;
+	out[popIndex++] = sample;
 }
 
 static inline int runHalfbandFir(FIR*  obj, float* in, float* out, size_t sampleNum, size_t stepNum) {
@@ -225,7 +241,7 @@ static inline int runHalfbandFir(FIR*  obj, float* in, float* out, size_t sample
 	for (size_t n = 0; n < sampleNum; n += stepNum)
 	{
 
-		stepHalfbandFir(obj, in, &inOffset, out, &outOffset, stepNum);
+		stepHalfbandFir(obj, in + n, out + n / stepNum, stepNum);
 	}
 	return 0;
 }
@@ -248,6 +264,8 @@ FIR* createFir(unsigned int order, float* coeffs, bool isSymmetry) {
 }
 
 static inline int runFir(FIR*  obj, float* in, float* out, size_t sampleNum,size_t stepNum) {
+	// Note that the stepNum must a power of 2
+
 	size_t inOffset = 0;
 	size_t outOffset = 0;
 	if (sampleNum < stepNum)
@@ -259,11 +277,11 @@ static inline int runFir(FIR*  obj, float* in, float* out, size_t sampleNum,size
 		if (obj->isSymmetry_)
 		{
 			//stepSymmetricFir(obj, in, &inOffset, out, &outOffset, stepNum);
-			stepSymmetricFir(obj, in, &inOffset, out, &outOffset, stepNum);
+			stepSymmetricFir(obj, in+n,out + n/stepNum,stepNum);
 		}
 		else
 		{
-			stepAsymmetricFir(obj, in, &inOffset, out, &outOffset, stepNum);
+			stepAsymmetricFir(obj, in+n, out+n/stepNum, stepNum);
 		}
 	}
 	return 0;
