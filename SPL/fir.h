@@ -299,62 +299,81 @@ void freeFir(FIR* obj) {
 // Polyphase filter
 typedef struct 
 {
-	int bufferLen;
-	int bufferMask;
+	//int bandsNum;
+	//int bufferMask;
 	size_t splitBands_;
 	size_t order_;
 
-	int bpos;
-	unsigned int symmetricOrder;		// the number of fir's symmetric coefficient 
-	unsigned int tapNum;
+	//int bpos;
+	//unsigned int symmetricOrder;		// the number of fir's symmetric coefficient 
+	//unsigned int tapNum;
 
-	float **buffer;						// the buffer store fir state
+	// below parameters will be replace be the |firBands|
+	float *buffer;						// the buffer store fir state
+
 	float **coeffs;						// half FIR coefficients
+
+	FIR** firBands;		// the number of firBands is splitBands
+	size_t bandsLen;
 }
 PolyphaseFilter;
 
-PolyphaseFilter* newPolyphaseFilter(size_t order,size_t splitBands,float* coeffs) {
+PolyphaseFilter* newPolyphaseFilter(size_t order,size_t splitBands,const float* coeffs) {
 	// the number of ceofficients is filter order + 1
 	// splitBands:	split the fir filter into |splitBands| bands
 
 	PolyphaseFilter* obj = (PolyphaseFilter*)malloc(sizeof(PolyphaseFilter));
 	obj->splitBands_ = splitBands;
 	obj->order_ = order;
-	obj->bufferLen =ceil((order + 1.0f) / (float)splitBands);
+	obj->bandsLen =ceil((order + 1.0f) / (float)splitBands); // bands buffer length
 
-	obj->buffer =(float**)malloc(sizeof(float)*obj->splitBands_);
+	obj->buffer = (float*)malloc(sizeof(float)*obj->splitBands_);
+	memset(obj->buffer, 0, sizeof(float)*obj->splitBands_);
+
+	// initialize every fir bands
+	obj->firBands = (FIR**)malloc(sizeof(FIR)*obj->splitBands_);
 	obj->coeffs =(float**)malloc(sizeof(float)*obj->splitBands_);
-	for (size_t n = 0; n < obj->splitBands_; n++)
+	for (size_t nBands = 0; nBands < obj->splitBands_; nBands++)
 	{
-		obj->buffer[n] = (float*)malloc(sizeof(float)*obj->bufferLen);
-		obj->coeffs[n] = (float*)malloc(sizeof(float)*obj->bufferLen);
-		memset(obj->buffer[n], 0, sizeof(float)*obj->bufferLen);
-		memset(obj->coeffs[n], 0, sizeof(float)*obj->bufferLen);
-		for (size_t m = 0; m < obj->bufferLen; m++)
+		obj->coeffs[nBands] = (float*)malloc(sizeof(float)*obj->bandsLen);
+		memset(obj->coeffs[nBands], 0, sizeof(float)*obj->bandsLen);
+
+		size_t m = 0;
+		for (; m < obj->bandsLen; m++)
 		{
-			if (n*obj->bufferLen + m > order) 
+			//if (nBands*obj->bandsLen + m > order)
+			if (obj->splitBands_ * m + nBands > order+1)
 			{
 				break;
 			}
-			obj->coeffs[n][m] = coeffs[n*obj->bufferLen + m];
+			obj->coeffs[nBands][m] = coeffs[obj->splitBands_ * m + nBands];
 		}
+		
+		obj->firBands[nBands] = newAsymmetricFir(m - 1, obj->coeffs[nBands]);
+		// ¿ÉÒÔ¿¼ÂÇ°Ñ coeffs free µô
 	}
 
 	return obj;
 }
-void runPolyphaseDecimation() {
-	// up samplerate
+void runPolyphaseDecimation(PolyphaseFilter* obj, float* in, float* decimatedOut, size_t decimatedNum) {
+	// M
+	// down samplerate, input |decimatedNum| samples, output one sample
+	float tmp = 0;
+	float sum = 0;
+	for (size_t nBands = 0; nBands < obj->splitBands_; nBands++)
+	{
+		stepAsymmetricFir(obj->firBands[nBands], in+nBands, &tmp, 1);
+		sum += tmp;
+	}
+	*decimatedOut = sum;
 }
-void runPolyphaseInterpolation(PolyphaseFilter*obj,float in,float* interpOut,int interpNum) {
-	// down samplerate
+void runPolyphaseInterpolation(PolyphaseFilter* obj,float* in,float* interpolatedOut, size_t interpolatedNum) {
+	// L
+	//  up samplerate, input one sample, output |interpolatedNum| samples
 
 	for (size_t nBands = 0; nBands < obj->splitBands_; nBands++)
 	{
-		for (size_t n = 0; n < obj->bufferLen; n++)
-		{
-			// run subfir 
-			interpOut[nBands];
-		}
+		stepAsymmetricFir(obj->firBands[nBands], in, interpolatedOut + obj->splitBands_ - nBands -1, 1);
 	}
 
 }
@@ -363,11 +382,16 @@ void freePolyphaseFilter(PolyphaseFilter* obj) {
 	{
 		for (size_t n = 0; n < obj->splitBands_; n++)
 		{
-			free(obj->buffer[n]);
 			free(obj->coeffs[n]);
+			freeFir(obj->firBands[n]);
+			obj->coeffs[n] = NULL;
+			obj->firBands[n] = NULL;
 		}
 		free(obj->coeffs);
 		free(obj->buffer);
 		free(obj);
+		obj->coeffs = NULL;
+		obj->buffer = NULL;
+		obj = NULL;
 	}
 }

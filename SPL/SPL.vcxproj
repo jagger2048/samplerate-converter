@@ -173,6 +173,7 @@
     <ClInclude Include="response_measurement.h" />
     <ClInclude Include="rms_limiter.h" />
     <ClInclude Include="peak_limiter.h" />
+    <ClInclude Include="src_fir_coeffs.h" />
     <ClInclude Include="unittest.h" />
     <ClInclude Include="wavfile.h" />
     <ClInclude Include="_kiss_fft_guts.h" />

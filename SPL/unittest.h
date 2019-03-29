@@ -12,6 +12,7 @@
 #include "dynamic_bass_boost.h"
 #include "response_measurement.h"
 
+#include "src_fir_coeffs.h"
 using namespace std;
 
 void irUnitTest() {
@@ -330,25 +331,59 @@ void dbb2UnitTest_refactor() {
 
 
 }
-
+float* sineGenerator(float freq, float duration, float amplitude, float samplerate) {
+	float* sine = NULL;
+	sine = (float*)malloc(sizeof(float)*duration*samplerate);
+	for (size_t t = 0; t < duration*samplerate; t++)
+	{
+		sine[t] = amplitude*sin(2.0f*M_PI*freq*float(t) / samplerate);
+	}
+	return sine;
+}
 void polyphaseFilterUnittest() {
-	float coeffs[10];
-	for (size_t i = 0; i < 10; i++)
+	
+
+	float* x96 = sineGenerator(1000, 1, 1, 96000);
+	PolyphaseFilter* p = newPolyphaseFilter(FIR_96_48, 2, FIR_96_48_24);
+
+	float* y96 = (float*)malloc(sizeof(float) * 96000);
+	// test case 1: 96k->48k	|	2:1
+	// Use the polyphase decimation,M
+	for (size_t n = 0; n < 96000; n+=2)
 	{
-		coeffs[i] = i;
+		runPolyphaseDecimation(p, x96+n, y96+n/2, 2);
 	}
-	PolyphaseFilter* p = newPolyphaseFilter(4, 2, coeffs);
+
+	fstream fo;
+	fo.precision(12);
+	fo.open("96 to 48.txt", ios::out);
+	for (size_t n = 0; n < 96000 /2; n++)
+	{
+
+		fo << y96[n] << "	";
+		fo << "\n";
+	}
+	fo.close();
 
 
-	for (size_t n = 0; n < p->splitBands_; n++)
-	{
-		for (size_t j = 0; j < p->bufferLen; j++) {
-			//printf(" %f - %f ", p->buffer[n][j], p->coeffs[n][j]);
-			printf(" %f ", p->coeffs[n][j]);
-		}
-		printf("\n");
-		printf("\n");
-	}
+
+
+	// test case 2: 48k->96k	|	1:2
+	// Use the polyphase interpolation,L
+	//runPolyphaseInterpolation(p, in, out, 2);
+
+	// tese case 3: 96k->44.1	|	147:320
+	// Use polyphase decimation and polyphase interpolation, M/L
+	//runPolyphaseDecimation(p, in, out, 147);
+	//runPolyphaseInterpolation(p, in, out, 320);
+
+	// test case 4: 96k->44.1k	|	147:320
+	// Use frational polyphase decimation and interpolation
+	// To be complemented
+
+	// test case 5: 96k->44.1	|	8:7->8:3->5:7
+	// Use multi-state frational polyphase decimation and interpolation
+	// To be complemented
 
 	freePolyphaseFilter(p);
 }
