@@ -22,7 +22,7 @@ typedef struct
 }
 FIR;
 
-FIR* newSymmetricFir(unsigned int order, float *coeffs) {
+FIR* newSymmetricFir(unsigned int order,const float *coeffs) {
 	//	order:	FIR filter order
 	//	coeffs: the coefficeents of FIR filter
 	FIR* obj = (FIR *)malloc(sizeof(FIR));
@@ -61,7 +61,7 @@ FIR* newSymmetricFir(unsigned int order, float *coeffs) {
 	return obj;
 }
 
-FIR* newAsymmetricFir(unsigned int order, float *coeffs) {
+FIR* newAsymmetricFir(unsigned int order,const float *coeffs) {
 	//	order:	FIR filter order
 	//	coeffs: the coefficeents of FIR filter
 	FIR* obj = (FIR *)malloc(sizeof(FIR));
@@ -245,7 +245,7 @@ static inline int runHalfbandFir(FIR*  obj, float* in, float* out, size_t sample
 	}
 	return 0;
 }
-FIR* createFir(unsigned int order, float* coeffs, bool isSymmetry) {
+FIR* createFir(unsigned int order, const float* coeffs, bool isSymmetry) {
 
 	FIR* obj;
 	if (isSymmetry)
@@ -304,12 +304,15 @@ typedef struct
 	size_t splitBands_;
 	size_t order_;
 
-	//int bpos;
+
 	//unsigned int symmetricOrder;		// the number of fir's symmetric coefficient 
 	//unsigned int tapNum;
 
 	// below parameters will be replace be the |firBands|
 	float *buffer;						// the buffer store fir state
+	size_t bufferLen;
+	size_t bufferMask;
+	int bpos;
 
 	float **coeffs;						// half FIR coefficients
 
@@ -326,9 +329,15 @@ PolyphaseFilter* newPolyphaseFilter(size_t order,size_t splitBands,const float* 
 	obj->splitBands_ = splitBands;
 	obj->order_ = order;
 	obj->bandsLen =ceil((order + 1.0f) / (float)splitBands); // bands buffer length
-
-	obj->buffer = (float*)malloc(sizeof(float)*obj->splitBands_);
-	memset(obj->buffer, 0, sizeof(float)*obj->splitBands_);
+	obj->bufferLen = 1;
+	while (obj->bufferLen < obj->splitBands_)
+	{
+		obj->bufferLen <<= 1;
+	}
+	obj->buffer = (float*)malloc(sizeof(float)*obj->bufferLen);
+	memset(obj->buffer, 0, sizeof(float)*obj->bufferLen);
+	obj->bufferMask = obj->bufferLen - 1;
+	obj->bpos = 0;
 
 	// initialize every fir bands
 	obj->firBands = (FIR**)malloc(sizeof(FIR)*obj->splitBands_);
@@ -360,9 +369,10 @@ void runPolyphaseDecimation(PolyphaseFilter* obj, float* in, float* decimatedOut
 	// down samplerate, input |decimatedNum| samples, output one sample
 	float tmp = 0;
 	float sum = 0;
+
 	for (size_t nBands = 0; nBands < obj->splitBands_; nBands++)
 	{
-		stepAsymmetricFir(obj->firBands[nBands], in+nBands, &tmp, 1);
+		stepAsymmetricFir(obj->firBands[nBands], in+ obj->splitBands_ - nBands - 1, &tmp, 1);
 		sum += tmp;
 	}
 	*decimatedOut = sum;
