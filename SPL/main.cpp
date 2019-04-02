@@ -9,9 +9,7 @@ using namespace std;
 
 int main()
 {
-	//irUnitTest();
-	////dbb2UnitTest_refactor();
-	//firUnitTest();
+
 	polyphaseFilterUnittest();
 
 

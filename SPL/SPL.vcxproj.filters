@@ -16,82 +16,13 @@
     <Filter Include="signal processing library">
       <UniqueIdentifier>{0d53d943-868e-433d-8352-e4ab729a8ea8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="signal processing library\audio file">
-      <UniqueIdentifier>{1b6a836c-5d01-4998-a0d5-f48a138becf0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="signal processing library\basic tools">
-      <UniqueIdentifier>{265b6a74-2a5d-483a-bec3-25de82d54ae4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="signal processing library\reverb">
-      <UniqueIdentifier>{b61f6ae4-2dee-463c-8f5a-c02018648fce}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="signal processing library\spectrum measurment">
-      <UniqueIdentifier>{9f359b22-a8f0-411a-99bc-729a92b6a6fc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="signal processing library\dynamics processor">
-      <UniqueIdentifier>{5dc2297f-dfa3-4d25-8f31-44e839ebebc6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="signal processing library\FFT">
-      <UniqueIdentifier>{c585135e-4e41-445f-b5c2-8f22697c42c3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="signal processing library\others">
-      <UniqueIdentifier>{6ed3c13a-6a49-4694-acb1-e12f36bbc073}</UniqueIdentifier>
-    </Filter>
     <Filter Include="signal processing library\filters">
       <UniqueIdentifier>{21008413-19d7-43fa-aad6-19858c9ce686}</UniqueIdentifier>
     </Filter>
-    <Filter Include="signal processing library\EQ">
-      <UniqueIdentifier>{aba38c49-4995-49ac-bf7f-99ae3c10449d}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="dr_wav.h">
-      <Filter>signal processing library\audio file</Filter>
-    </ClInclude>
-    <ClInclude Include="dsdfile.h">
-      <Filter>signal processing library\audio file</Filter>
-    </ClInclude>
-    <ClInclude Include="wavfile.h">
-      <Filter>signal processing library\audio file</Filter>
-    </ClInclude>
-    <ClInclude Include="compressor.h">
-      <Filter>signal processing library\dynamics processor</Filter>
-    </ClInclude>
-    <ClInclude Include="rms_limiter.h">
-      <Filter>signal processing library\dynamics processor</Filter>
-    </ClInclude>
-    <ClInclude Include="peak_limiter.h">
-      <Filter>signal processing library\dynamics processor</Filter>
-    </ClInclude>
-    <ClInclude Include="kiss_fft.h">
-      <Filter>signal processing library\FFT</Filter>
-    </ClInclude>
-    <ClInclude Include="_kiss_fft_guts.h">
-      <Filter>signal processing library\FFT</Filter>
-    </ClInclude>
-    <ClInclude Include="kiss_fftr.h">
-      <Filter>signal processing library\FFT</Filter>
-    </ClInclude>
-    <ClInclude Include="fft_convolver.h">
-      <Filter>signal processing library\FFT</Filter>
-    </ClInclude>
-    <ClInclude Include="my_fft.h">
-      <Filter>signal processing library\FFT</Filter>
-    </ClInclude>
     <ClInclude Include="biquad.h">
       <Filter>signal processing library\filters</Filter>
-    </ClInclude>
-    <ClInclude Include="response_measurement.h">
-      <Filter>signal processing library\spectrum measurment</Filter>
-    </ClInclude>
-    <ClInclude Include="dynamic_bass_boost2.h">
-      <Filter>signal processing library\EQ</Filter>
-    </ClInclude>
-    <ClInclude Include="dbb_unittest.h">
-      <Filter>signal processing library\EQ</Filter>
-    </ClInclude>
-    <ClInclude Include="dynamic_bass_boost.h">
-      <Filter>signal processing library\EQ</Filter>
     </ClInclude>
     <ClInclude Include="fir.h">
       <Filter>signal processing library\filters</Filter>
@@ -106,15 +37,6 @@
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="kiss_fft.c">
-      <Filter>signal processing library\FFT</Filter>
-    </ClCompile>
-    <ClCompile Include="kiss_fastfir.c">
-      <Filter>signal processing library\FFT</Filter>
-    </ClCompile>
-    <ClCompile Include="kiss_fftr.c">
-      <Filter>signal processing library\FFT</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
