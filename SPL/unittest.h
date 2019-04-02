@@ -366,18 +366,20 @@ void polyphaseFilterUnittest() {
 		runPolyphaseDecimation(p, x96+n, y96+n/2, 2);
 	}
 	output2File("96 to 48.txt", y96, 96000 / 2);
+	output2File("96 to 48 - 96.txt", x96, 96000);
 
 	// test case 2: 48k->96k	|	1:2
 	// Use the polyphase interpolation,L	|| test pass
 	memset(y96, 0, sizeof(float) * 96000);
 
-	float* x48 = sineGenerator(2000, 1, 1, 48e3);
+	float* x48 = sineGenerator(1000, 1, 1, 48e3);
 	for (size_t n = 0; n < 48000; n++)
 	{
 		runPolyphaseInterpolation(p, x48 + n, y96 + n*2, 2);
 
 	}
 	output2File("48 to 96.txt", y96, 96000);
+	output2File("48 to 96 - 48.txt", x48, 48000);
 
 	free(x96);
 	free(y96);
